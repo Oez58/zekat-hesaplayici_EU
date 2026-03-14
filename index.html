@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="tr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0D1F1A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Zekat">
+<meta name="description" content="Zekat Hesaplayıcı – Canlı altın fiyatıyla">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>☪ Zekat Hesaplayıcı</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0D1F1A;
+    --bg2:       #122B24;
+    --bg3:       #1A3D32;
+    --gold:      #C9A84C;
+    --gold-light:#F0D080;
+    --gold-dim:  #8B6914;
+    --green:     #2ECC8A;
+    --green-dim: #1A7A52;
+    --red:       #E05555;
+    --red-dim:   #7A2222;
+    --white:     #F5F0E8;
+    --gray:      #8A9E96;
+    --silver:    #A8B8C8;
+    --radius:    14px;
+    --card:      rgba(26,61,50,0.7);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 40px;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(201,168,76,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(46,204,138,0.06) 0%, transparent 60%);
+  }
+
+  /* ── Header ─────────────────────────────── */
+  .header {
+    background: linear-gradient(180deg, #0A1710 0%, var(--bg) 100%);
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+    padding: 24px 20px 20px;
+    text-align: center;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+  .header-symbol { font-size: 28px; margin-bottom: 2px; }
+  .header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .header-sub {
+    font-size: 11px;
+    color: var(--gray);
+    letter-spacing: 1px;
+    margin-top: 3px;
+  }
+
+  /* ── Live Price Bar ──────────────────────── */
+  .price-bar {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: rgba(10,23,16,0.8);
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+  }
+  .price-bar::-webkit-scrollbar { display: none; }
+  .price-chip {
+    flex-shrink: 0;
+    background: var(--bg3);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 20px;
+    padding: 6px 14px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px;
+  }
+  .price-chip .label { color: var(--gray); }
+  .price-chip .value { color: var(--gold-light); font-weight: 700; font-size: 13px; }
+  .price-chip .ts { color: rgba(138,158,150,0.6); font-size: 10px; }
+  .price-chip.silver .value { color: var(--silver); }
+  .price-chip.fx .value { color: var(--green); }
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--gray); flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .status-dot.live { background: var(--green); animation: pulse 2s infinite; }
+  .status-dot.error { background: var(--red); }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
+
+  /* ── Content ─────────────────────────────── */
+  .content { padding: 16px; max-width: 560px; margin: 0 auto; }
+
+  /* ── Section ─────────────────────────────── */
+  .section {
+    background: var(--card);
+    border: 1px solid rgba(201,168,76,0.12);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+    backdrop-filter: blur(4px);
+  }
+  .section-title {
+    background: rgba(201,168,76,0.08);
+    border-bottom: 1px solid rgba(201,168,76,0.12);
+    padding: 12px 16px;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title.red {
+    background: rgba(224,85,85,0.08);
+    border-color: rgba(224,85,85,0.15);
+    color: var(--red);
+  }
+
+  /* ── Input Row ───────────────────────────── */
+  .input-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    gap: 10px;
+    transition: background 0.15s;
+  }
+  .input-row:last-child { border-bottom: none; }
+  .input-row:focus-within { background: rgba(201,168,76,0.04); }
+  .input-label {
+    flex: 1;
+    font-size: 13px;
+    color: var(--white);
+    opacity: 0.85;
+  }
+  .input-note {
+    font-size: 10px;
+    color: var(--gray);
+    display: block;
+    margin-top: 1px;
+  }
+  .input-field {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 8px;
+    color: var(--gold-light);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    text-align: right;
+    padding: 7px 10px;
+    width: 110px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .input-field:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+  }
+  .input-field.debt {
+    border-color: rgba(224,85,85,0.3);
+    color: var(--red);
+  }
+  .input-field.debt:focus {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(224,85,85,0.15);
+  }
+  .input-unit {
+    font-size: 11px;
+    color: var(--gray);
+    width: 28px;
+    text-align: left;
+  }
+
+  /* ── Subtotal Row ────────────────────────── */
+  .subtotal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 16px;
+    background: rgba(201,168,76,0.06);
+    border-top: 1px solid rgba(201,168,76,0.12);
+  }
+  .subtotal-row.red {
+    background: rgba(224,85,85,0.06);
+    border-color: rgba(224,85,85,0.15);
+  }
+  .subtotal-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .subtotal-row.red .subtotal-label { color: var(--red); }
+  .subtotal-value {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gold-light);
+  }
+  .subtotal-row.red .subtotal-value { color: var(--red); }
+
+  /* ── Nisap Selector ──────────────────────── */
+  .nisap-select {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 8px;
+    color: var(--gold-light);
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    padding: 8px 10px;
+    outline: none;
+    width: 160px;
+    cursor: pointer;
+  }
+
+  /* ── Divider ─────────────────────────────── */
+  .debt-note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--red);
+    opacity: 0.7;
+    padding-right: 4px;
+  }
+
+  /* ── Result Card ─────────────────────────── */
+  .result-card {
+    background: linear-gradient(135deg, var(--bg3) 0%, #0D2A1F 100%);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-label { font-size: 13px; color: var(--gray); }
+  .result-value { font-weight: 700; font-size: 14px; color: var(--white); }
+  .result-value.red { color: var(--red); }
+  .result-value.gold { color: var(--gold-light); font-family: 'Cinzel', serif; font-size: 15px; }
+
+  .nisap-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .nisap-badge.yes { background: rgba(46,204,138,0.15); color: var(--green); border: 1px solid rgba(46,204,138,0.3); }
+  .nisap-badge.no  { background: rgba(224,85,85,0.1);   color: var(--red);   border: 1px solid rgba(224,85,85,0.2); }
+
+  /* ── Zekat Hero ──────────────────────────── */
+  .zekat-hero {
+    background: linear-gradient(135deg, #1A4D35 0%, #0D2A1F 100%);
+    border: 1px solid rgba(46,204,138,0.3);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    text-align: center;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .zekat-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(46,204,138,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .zekat-hero-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--green);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0.8;
+  }
+  .zekat-hero-amount {
+    font-family: 'Cinzel', serif;
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--green);
+    line-height: 1;
+    margin-bottom: 6px;
+    text-shadow: 0 0 30px rgba(46,204,138,0.3);
+  }
+  .zekat-hero-sub {
+    font-size: 12px;
+    color: var(--gray);
+  }
+
+  /* ── Refresh Button ──────────────────────── */
+  .refresh-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: var(--radius);
+    color: var(--gold);
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+    -webkit-appearance: none;
+  }
+  .refresh-btn:active { background: rgba(201,168,76,0.15); transform: scale(0.98); }
+  .refresh-btn.loading { opacity: 0.6; pointer-events: none; }
+
+  /* ── Reset Button ────────────────────────── */
+  .reset-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius);
+    color: var(--gray);
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    margin-bottom: 24px;
+    transition: all 0.2s;
+    -webkit-appearance: none;
+  }
+  .reset-btn:active { background: rgba(255,255,255,0.05); }
+
+  /* ── Footer ──────────────────────────────── */
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: rgba(138,158,150,0.4);
+    padding: 0 20px;
+    line-height: 1.6;
+  }
+
+  /* ── Spinner ─────────────────────────────── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { animation: spin 1s linear infinite; display: inline-block; }
+
+  /* ── Collapsible Sections ────────────────── */
+  .section-toggle {
+    cursor: pointer;
+    user-select: none;
+  }
+  .section-toggle::after {
+    content: '▾';
+    margin-left: auto;
+    font-size: 14px;
+    color: var(--gold-dim);
+    transition: transform 0.2s;
+  }
+  .section-toggle.collapsed::after { transform: rotate(-90deg); }
+  .section-body { transition: max-height 0.3s ease; overflow: hidden; }
+  .section-body.collapsed { max-height: 0 !important; }
+
+  /* ── APK Info ────────────────────────────── */
+  .apk-card {
+    background: rgba(201,168,76,0.05);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .apk-title {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: var(--gold);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+  .apk-step {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--gray);
+    line-height: 1.5;
+  }
+  .apk-num {
+    background: rgba(201,168,76,0.15);
+    color: var(--gold);
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+  }
+  .apk-link {
+    color: var(--gold-light);
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-symbol">☪</div>
+  <h1>Zekat Hesaplayıcı</h1>
+  <div class="header-sub">Canlı altın & gümüş fiyatı</div>
+</div>
+
+<!-- Live Price Bar -->
+<div class="price-bar">
+  <div class="price-chip">
+    <div class="status-dot" id="statusDot"></div>
+    <span class="label">Altın/g</span>
+    <span class="value" id="goldGramDisplay">—</span>
+    <span class="ts" id="lastUpdate">güncelleniyor…</span>
+  </div>
+  <div class="price-chip silver">
+    <span class="label">Gümüş/g</span>
+    <span class="value" id="silverGramDisplay">—</span>
+  </div>
+  <div class="price-chip fx">
+    <span class="label">EUR/USD</span>
+    <span class="value" id="eurUsdDisplay">—</span>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- Refresh Button -->
+  <button class="refresh-btn" id="refreshBtn" onclick="fetchPrices()">
+    <span id="refreshIcon">↻</span> Fiyatları Güncelle
+  </button>
+
+  <!-- Nisap -->
+  <div class="section">
+    <div class="section-title">⚙ Nisap Ayarı</div>
+    <div class="input-row">
+      <div class="input-label">
+        Nisap Standardı
+        <span class="input-note" id="nisapNote">Hesaplanıyor…</span>
+      </div>
+      <select class="nisap-select" id="nisapSelect" onchange="calculate()">
+        <option value="gold">Altın Nisabı (87.48g)</option>
+        <option value="silver">Gümüş Nisabı (612.36g)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Altın Ayar -->
+  <div class="section">
+    <div class="section-title section-toggle" onclick="toggleSection(this)">🥇 Altın – Ayara Göre</div>
+    <div class="section-body">
+      <div class="input-row"><div class="input-label">24 Ayar Altın<span class="input-note">Saf altın</span></div><input class="input-field" type="number" min="0" step="0.01" value="0" id="a24" oninput="calculate()"><span class="input-unit">g</span></div>
+      <div class="input-row"><div class="input-label">22 Ayar Altın</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="a22" oninput="calculate()"><span class="input-unit">g</span></div>
+      <div class="input-row"><div class="input-label">18 Ayar Altın</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="a18" oninput="calculate()"><span class="input-unit">g</span></div>
+      <div class="input-row"><div class="input-label">14 Ayar Altın</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="a14" oninput="calculate()"><span class="input-unit">g</span></div>
+      <div class="subtotal-row"><span class="subtotal-label">Ara Toplam</span><span class="subtotal-value" id="sumAyar">0.00 €</span></div>
+    </div>
+  </div>
+
+  <!-- Türk Altın -->
+  <div class="section">
+    <div class="section-title section-toggle" onclick="toggleSection(this)">🪙 Türk Altın Çeşitleri</div>
+    <div class="section-body">
+      <div class="input-row"><div class="input-label">Çeyrek Altın<span class="input-note">≈1.75g saf</span></div><input class="input-field" type="number" min="0" step="1" value="0" id="ceyrek" oninput="calculate()"><span class="input-unit">adet</span></div>
+      <div class="input-row"><div class="input-label">Yarım Altın<span class="input-note">≈3.50g saf</span></div><input class="input-field" type="number" min="0" step="1" value="0" id="yarim" oninput="calculate()"><span class="input-unit">adet</span></div>
+      <div class="input-row"><div class="input-label">Tam Altın<span class="input-note">≈7.00g saf</span></div><input class="input-field" type="number" min="0" step="1" value="0" id="tam" oninput="calculate()"><span class="input-unit">adet</span></div>
+      <div class="input-row"><div class="input-label">Cumhuriyet Altını<span class="input-note">≈7.216g saf</span></div><input class="input-field" type="number" min="0" step="1" value="0" id="cumhuriyet" oninput="calculate()"><span class="input-unit">adet</span></div>
+      <div class="input-row"><div class="input-label">Ata Altın<span class="input-note">≈7.216g</span></div><input class="input-field" type="number" min="0" step="1" value="0" id="ata" oninput="calculate()"><span class="input-unit">adet</span></div>
+      <div class="input-row"><div class="input-label">Reşat Altın<span class="input-note">≈7.216g</span></div><input class="input-field" type="number" min="0" step="1" value="0" id="resat" oninput="calculate()"><span class="input-unit">adet</span></div>
+      <div class="input-row"><div class="input-label">Hamit Altın<span class="input-note">≈7.216g</span></div><input class="input-field" type="number" min="0" step="1" value="0" id="hamit" oninput="calculate()"><span class="input-unit">adet</span></div>
+      <div class="input-row"><div class="input-label">İkibuçuk Altın<span class="input-note">≈17.54g</span></div><input class="input-field" type="number" min="0" step="1" value="0" id="ikibucuk" oninput="calculate()"><span class="input-unit">adet</span></div>
+      <div class="input-row"><div class="input-label">Beşli Altın<span class="input-note">≈35.08g</span></div><input class="input-field" type="number" min="0" step="1" value="0" id="besli" oninput="calculate()"><span class="input-unit">adet</span></div>
+      <div class="input-row"><div class="input-label">Gremse Altın<span class="input-note">≈1g</span></div><input class="input-field" type="number" min="0" step="1" value="0" id="gremse" oninput="calculate()"><span class="input-unit">adet</span></div>
+      <div class="subtotal-row"><span class="subtotal-label">Ara Toplam</span><span class="subtotal-value" id="sumCoins">0.00 €</span></div>
+    </div>
+  </div>
+
+  <!-- Gümüş -->
+  <div class="section">
+    <div class="section-title section-toggle" onclick="toggleSection(this)">🥈 Gümüş</div>
+    <div class="section-body">
+      <div class="input-row"><div class="input-label">Gümüş</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="silver" oninput="calculate()"><span class="input-unit">g</span></div>
+      <div class="input-row"><div class="input-label">Takı / Mücevher<span class="input-note">Kullanılmayan takılar</span></div><input class="input-field" type="number" min="0" step="0.01" value="0" id="jewelry" oninput="calculate()"><span class="input-unit">€</span></div>
+      <div class="subtotal-row"><span class="subtotal-label">Ara Toplam</span><span class="subtotal-value" id="sumSilver">0.00 €</span></div>
+    </div>
+  </div>
+
+  <!-- Nakit -->
+  <div class="section">
+    <div class="section-title section-toggle" onclick="toggleSection(this)">💶 Nakit & Banka</div>
+    <div class="section-body">
+      <div class="input-row"><div class="input-label">Nakit Para</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="cash" oninput="calculate()"><span class="input-unit">€</span></div>
+      <div class="input-row"><div class="input-label">Vadesiz / Cari Hesap</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="bank1" oninput="calculate()"><span class="input-unit">€</span></div>
+      <div class="input-row"><div class="input-label">Vadeli Hesap / Mevduat</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="bank2" oninput="calculate()"><span class="input-unit">€</span></div>
+      <div class="input-row"><div class="input-label">Diğer Banka Hesapları</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="bank3" oninput="calculate()"><span class="input-unit">€</span></div>
+      <div class="subtotal-row"><span class="subtotal-label">Ara Toplam</span><span class="subtotal-value" id="sumCash">0.00 €</span></div>
+    </div>
+  </div>
+
+  <!-- Yatırımlar -->
+  <div class="section">
+    <div class="section-title section-toggle" onclick="toggleSection(this)">📈 Hisse & Yatırımlar</div>
+    <div class="section-body">
+      <div class="input-row"><div class="input-label">Hisse Senedi</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="stocks" oninput="calculate()"><span class="input-unit">€</span></div>
+      <div class="input-row"><div class="input-label">Fon / ETF</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="funds" oninput="calculate()"><span class="input-unit">€</span></div>
+      <div class="input-row"><div class="input-label">Kripto Para</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="crypto" oninput="calculate()"><span class="input-unit">€</span></div>
+      <div class="input-row"><div class="input-label">Diğer Yatırımlar</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="invest" oninput="calculate()"><span class="input-unit">€</span></div>
+      <div class="subtotal-row"><span class="subtotal-label">Ara Toplam</span><span class="subtotal-value" id="sumInvest">0.00 €</span></div>
+    </div>
+  </div>
+
+  <!-- Ticari -->
+  <div class="section">
+    <div class="section-title section-toggle" onclick="toggleSection(this)">🏪 Ticari Varlıklar</div>
+    <div class="section-body">
+      <div class="input-row"><div class="input-label">Ticari Mal / Stok</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="biz1" oninput="calculate()"><span class="input-unit">€</span></div>
+      <div class="input-row"><div class="input-label">Alacaklar</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="biz2" oninput="calculate()"><span class="input-unit">€</span></div>
+      <div class="input-row"><div class="input-label">İşletme Kasası</div><input class="input-field" type="number" min="0" step="0.01" value="0" id="biz3" oninput="calculate()"><span class="input-unit">€</span></div>
+      <div class="subtotal-row"><span class="subtotal-label">Ara Toplam</span><span class="subtotal-value" id="sumBiz">0.00 €</span></div>
+    </div>
+  </div>
+
+  <!-- Borçlar -->
+  <div class="section">
+    <div class="section-title red section-toggle" onclick="toggleSection(this)">🔴 Kısa Vadeli Borçlar</div>
+    <div class="section-body">
+      <div class="input-row"><div class="input-label">Kira Borcu</div><input class="input-field debt" type="number" min="0" step="0.01" value="0" id="debt1" oninput="calculate()"><span class="input-unit" style="color:var(--red)">€</span></div>
+      <div class="input-row"><div class="input-label">Fatura Borçları</div><input class="input-field debt" type="number" min="0" step="0.01" value="0" id="debt2" oninput="calculate()"><span class="input-unit" style="color:var(--red)">€</span></div>
+      <div class="input-row"><div class="input-label">Ticari Borçlar</div><input class="input-field debt" type="number" min="0" step="0.01" value="0" id="debt3" oninput="calculate()"><span class="input-unit" style="color:var(--red)">€</span></div>
+      <div class="input-row"><div class="input-label">Diğer Borçlar</div><input class="input-field debt" type="number" min="0" step="0.01" value="0" id="debt4" oninput="calculate()"><span class="input-unit" style="color:var(--red)">€</span></div>
+      <div class="subtotal-row red"><span class="subtotal-label">Toplam Borç</span><span class="subtotal-value" id="sumDebt">- 0.00 €</span></div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-card">
+    <div class="result-row">
+      <span class="result-label">Brüt Servet</span>
+      <span class="result-value gold" id="resBrut">0.00 €</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Toplam Borç</span>
+      <span class="result-value red" id="resDebt">- 0.00 €</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Net Servet</span>
+      <span class="result-value gold" id="resNet">0.00 €</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Nisap Eşiği</span>
+      <span class="result-value" id="resNisap">—</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Nisap Aşıldı mı?</span>
+      <span id="resNisapCheck"><span class="nisap-badge no">❌ Hesaplanıyor</span></span>
+    </div>
+  </div>
+
+  <!-- Zekat Hero -->
+  <div class="zekat-hero">
+    <div class="zekat-hero-label">Ödenecek Zekat (%2.5)</div>
+    <div class="zekat-hero-amount" id="resZekat">0.00 €</div>
+    <div class="zekat-hero-sub" id="resZekatSub">Varlık değerlerinizi girin</div>
+  </div>
+
+  <!-- Reset -->
+  <button class="reset-btn" onclick="resetAll()">↺ Tüm Değerleri Sıfırla</button>
+
+  <!-- APK Info -->
+  <div class="apk-card">
+    <div class="apk-title">📱 APK Olarak Kurulum (Android)</div>
+    <div class="apk-step"><div class="apk-num">1</div><span>Bu sayfayı <span class="apk-link">webintoapp.com</span> adresine yükleyin veya URL'yi girin</span></div>
+    <div class="apk-step"><div class="apk-num">2</div><span>App adı, ikon ve renk seçin → "Build APK" tıklayın</span></div>
+    <div class="apk-step"><div class="apk-num">3</div><span>APK dosyasını indirin ve Android'e kurun</span></div>
+    <div class="apk-step"><div class="apk-num">💡</div><span>Alternatif: Chrome'da bu sayfayı aç → Menü → "Ana Ekrana Ekle" → PWA olarak çalışır</span></div>
+  </div>
+
+  <div class="footer">
+    Zekat Hesaplayıcı · Canlı fiyat: api.gold-api.com + frankfurter.app<br>
+    Bu araç yönlendirme amaçlıdır, dini fetva yerine geçmez.
+  </div>
+
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────
+var goldEurG   = 0;
+var silverEurG = 0;
+var eurUsd     = 1;
+
+// ── Fetch Prices ──────────────────────────────────────────────
+async function fetchPrices() {
+  const btn  = document.getElementById('refreshBtn');
+  const icon = document.getElementById('refreshIcon');
+  const dot  = document.getElementById('statusDot');
+  btn.classList.add('loading');
+  icon.classList.add('spinner');
+  dot.className = 'status-dot';
+
+  try {
+    const [goldRes, silverRes, fxRes] = await Promise.all([
+      fetch('https://api.gold-api.com/price/XAU'),
+      fetch('https://api.gold-api.com/price/XAG'),
+      fetch('https://api.frankfurter.app/latest?from=USD&to=EUR')
+    ]);
+
+    const goldData   = await goldRes.json();
+    const silverData = await silverRes.json();
+    const fxData     = await fxRes.json();
+
+    const goldUSD   = goldData.price;
+    const silverUSD = silverData.price;
+    eurUsd          = 1 / fxData.rates.EUR;
+    goldEurG        = goldUSD   / eurUsd / 31.1035;
+    silverEurG      = silverUSD / eurUsd / 31.1035;
+
+    const now = new Date();
+    const ts  = now.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+
+    document.getElementById('goldGramDisplay').textContent  = goldEurG.toFixed(2)   + ' €';
+    document.getElementById('silverGramDisplay').textContent= silverEurG.toFixed(4) + ' €';
+    document.getElementById('eurUsdDisplay').textContent    = eurUsd.toFixed(4);
+    document.getElementById('lastUpdate').textContent       = ts + ' güncellendi';
+
+    dot.className = 'status-dot live';
+    calculate();
+
+  } catch(e) {
+    dot.className = 'status-dot error';
+    document.getElementById('lastUpdate').textContent = 'Bağlantı hatası';
+  }
+
+  btn.classList.remove('loading');
+  icon.classList.remove('spinner');
+}
+
+// ── Format ────────────────────────────────────────────────────
+function fmt(n) {
+  return n.toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+}
+
+// ── Calculate ─────────────────────────────────────────────────
+function calculate() {
+  const g = goldEurG, s = silverEurG;
+
+  // Ayar altın
+  const ayar = (v('a24')*1 + v('a22')*(22/24) + v('a18')*(18/24) + v('a14')*(14/24)) * g;
+  document.getElementById('sumAyar').textContent = fmt(ayar);
+
+  // Türk altın coins
+  const coins = (v('ceyrek')*1.75 + v('yarim')*3.5 + v('tam')*7 +
+    v('cumhuriyet')*7.216 + v('ata')*7.216 + v('resat')*7.216 +
+    v('hamit')*7.216 + v('ikibucuk')*17.54 + v('besli')*35.08 + v('gremse')*1) * g;
+  document.getElementById('sumCoins').textContent = fmt(coins);
+
+  const totalGold = ayar + coins;
+
+  // Gümüş
+  const silverVal = v('silver') * s + v('jewelry');
+  document.getElementById('sumSilver').textContent = fmt(silverVal);
+
+  // Nakit
+  const cashVal = v('cash') + v('bank1') + v('bank2') + v('bank3');
+  document.getElementById('sumCash').textContent = fmt(cashVal);
+
+  // Yatırım
+  const investVal = v('stocks') + v('funds') + v('crypto') + v('invest');
+  document.getElementById('sumInvest').textContent = fmt(investVal);
+
+  // Ticari
+  const bizVal = v('biz1') + v('biz2') + v('biz3');
+  document.getElementById('sumBiz').textContent = fmt(bizVal);
+
+  // Borçlar
+  const debtVal = v('debt1') + v('debt2') + v('debt3') + v('debt4');
+  document.getElementById('sumDebt').textContent = '- ' + fmt(debtVal);
+
+  // Totals
+  const brut = totalGold + silverVal + cashVal + investVal + bizVal;
+  const net  = Math.max(0, brut - debtVal);
+
+  document.getElementById('resBrut').textContent = fmt(brut);
+  document.getElementById('resDebt').textContent = '- ' + fmt(debtVal);
+  document.getElementById('resNet').textContent  = fmt(net);
+
+  // Nisap
+  const nisapType = document.getElementById('nisapSelect').value;
+  const nisapVal  = nisapType === 'gold' ? 87.48 * g : 612.36 * s;
+  const nisapLbl  = nisapType === 'gold'
+    ? '87.48g × ' + g.toFixed(2) + ' €/g = ' + fmt(nisapVal)
+    : '612.36g × ' + s.toFixed(4) + ' €/g = ' + fmt(nisapVal);
+
+  document.getElementById('resNisap').textContent = nisapLbl;
+  document.getElementById('nisapNote').textContent = 'Eşik: ' + fmt(nisapVal);
+
+  const farz = net >= nisapVal && nisapVal > 0;
+  document.getElementById('resNisapCheck').innerHTML = farz
+    ? '<span class="nisap-badge yes">✅ EVET – Zekat Farz</span>'
+    : '<span class="nisap-badge no">❌ HAYIR – Zekat Gerekmez</span>';
+
+  const zekat = farz ? net * 0.025 : 0;
+  document.getElementById('resZekat').textContent = fmt(zekat);
+  document.getElementById('resZekatSub').textContent = farz
+    ? 'Net servetin %2.5\'i · ' + fmt(net) + ' × 0.025'
+    : 'Nisap eşiği aşılmadı veya değer girilmedi';
+}
+
+function v(id) {
+  return parseFloat(document.getElementById(id).value) || 0;
+}
+
+// ── Toggle Section ────────────────────────────────────────────
+function toggleSection(titleEl) {
+  titleEl.classList.toggle('collapsed');
+  const body = titleEl.nextElementSibling;
+  if (body.classList.contains('collapsed')) {
+    body.style.maxHeight = body.scrollHeight + 'px';
+    body.classList.remove('collapsed');
+  } else {
+    body.style.maxHeight = body.scrollHeight + 'px';
+    requestAnimationFrame(() => { body.classList.add('collapsed'); body.style.maxHeight = '0'; });
+  }
+}
+
+// ── Reset ─────────────────────────────────────────────────────
+function resetAll() {
+  document.querySelectorAll('input[type=number]').forEach(i => i.value = 0);
+  calculate();
+}
+
+// ── Init ──────────────────────────────────────────────────────
+fetchPrices();
+// Auto-refresh every 60 minutes
+setInterval(fetchPrices, 60 * 60 * 1000);
+</script>
+</body>
+</html>
