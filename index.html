@@ -635,7 +635,7 @@ async function fetchPrices() {
     const [goldRes, silverRes, fxRes] = await Promise.all([
       fetch('https://api.gold-api.com/price/XAU'),
       fetch('https://api.gold-api.com/price/XAG'),
-      fetch('https://api.frankfurter.app/latest?from=USD&to=EUR')
+      fetch('https://api.frankfurter.dev/v1/latest?from=USD&to=EUR')
     ]);
 
     const goldData   = await goldRes.json();
