@@ -51,7 +51,7 @@
 | Veri · Daten | Kaynak · Quelle |
 |---|---|
 | Altın & Gümüş · Gold & Silber (USD/Ons) | [api.gold-api.com](https://api.gold-api.com) – ücretsiz, limitsiz |
-| EUR/USD Kuru · Kurs | [api.frankfurter.app](https://api.frankfurter.app) – Avrupa Merkez Bankası · Europäische Zentralbank (EZB) |
+| EUR/USD Kuru · Kurs | [api.frankfurter.dev](https://api.frankfurter.dev) – Avrupa Merkez Bankası · Europäische Zentralbank (EZB) |
 | EUR/gram hesaplama · Berechnung | `USD/Ons ÷ EUR/USD ÷ 31.1035` |
 
 ---
@@ -101,6 +101,19 @@ Zekat                       =  Net Servet × %2.5  (Nisap aşıldığında · we
 - **PWA:** Web App Manifest
 - **API:** REST/JSON – keine Anmeldung erforderlich · kayıt gerekmez
 - **Hosting:** GitHub Pages
+
+---
+
+## 📋 Sürüm Geçmişi · Versionsverlauf
+
+### v1.1.0 · 2026-07-05
+- **Fix:** Frankfurter API Domain-Wechsel `.app` → `.dev` behoben. Die alte Domain leitet per 301 weiter, was den Browser-`fetch()` blockiert und die Preisaktualisierung komplett stoppte.
+- Neuer Endpoint: `api.frankfurter.dev/v1/latest` (Antwortstruktur unverändert, CORS weiterhin `*`)
+- Footer-Text und README Datenquelle aktualisiert
+
+### v1.0.0
+- Initiale Veröffentlichung · Initiale Version
+- Live-Gold-/Silberpreise, türkische Münzarten, Nisap-Prüfung, PWA-Installation
 
 ---
 
